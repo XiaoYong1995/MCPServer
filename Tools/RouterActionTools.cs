@@ -11,6 +11,7 @@ using Newtonsoft.Json;
 
 namespace SampleMcpServer.Tools
 {
+
     internal class RouterActionTools
     {
         // 1. 创建 CookieContainer
@@ -71,22 +72,23 @@ namespace SampleMcpServer.Tools
 
         [McpServerTool]
         [Description("使用此方法获取路由器映射列表,需要先使用login登录系统")]
-        public async Task<string> getMappingList()
+        public async Task<PortMappingConfig?> getMappingList()
         {
             if (cookieContainer.Count == 0)
             {
-                return "您没有登录";
+                throw new Exception("没有登录");
             }
             var result = await client.GetAsync("/cgi-bin/luci/admin/settings/pmDisplay");
-            string u = await result.Content.ReadAsStringAsync();
-            return u;
+            string jsonString = await result.Content.ReadAsStringAsync();
+            var ports=JsonConvert.DeserializeObject<PortMappingConfig>(jsonString);
+            return ports;
         }
         [McpServerTool]
         [Description("使用此方法设置或删除映射,需要先使用login登录系统")]
         public async Task<string> operationMapping(
             [Description("token,从login方法获取")] string token = "",
             [Description("operation 操作类型,添加则为 add 、删除则为 del")] string op = "add",
-            [Description("srvname 映射的名称")] string srvname = "",
+            [Description("srvname 映射的名称,这里的名称是getMappingList中的desp字段.")] string srvname = "",
             [Description("client 内网IP 在删除时无需提供")] string client_ip = "",
             [Description("protocol 有TCP、UDP、BOTH,在删除时无需提供")] string protocol = "",
             [Description("in_port 内部端口,在删除时无需提供")] string in_port = "",
